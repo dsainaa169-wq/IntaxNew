@@ -1,27 +1,37 @@
 import { useEffect, useState } from "react";
 
-const BACKEND_URL = "http://127.0.0.1:8000";
+const API = import.meta.env.VITE_API_URL;
 
-function App() {
-  const [data, setData] = useState([]);
-  const [error, setError] = useState(null);
+export default function App() {
+  const [data, setData] = useState(null);
+  const [err, setErr] = useState("");
 
   useEffect(() => {
-    fetch(`${BACKEND_URL}/acceptance`)
-      .then(res => res.json())
-      .then(setData)
-      .catch(err => setError(err.message));
+    async function run() {
+      try {
+        const res = await fetch(`${API}/acceptance`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        setData(json);
+      } catch (e) {
+        setErr(String(e));
+      }
+    }
+    run();
   }, []);
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>INTAX Audit Portal V2</h2>
+    <div style={{ padding: 16, fontFamily: "Arial, sans-serif" }}>
+      <h1>INTAX Audit Portal</h1>
+      <div>API: {API}</div>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
-
-      <pre>{JSON.stringify(data, null, 2)}</pre>
+      {err ? (
+        <p style={{ color: "red" }}>Error: {err}</p>
+      ) : data ? (
+        <pre>{JSON.stringify(data, null, 2)}</pre>
+      ) : (
+        <p>Loading...</p>
+      )}
     </div>
   );
 }
-
-export default App;
