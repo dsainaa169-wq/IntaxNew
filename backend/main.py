@@ -21,7 +21,7 @@ app.add_middleware(
 # -------------------------
 # MongoDB connection
 # -------------------------
-MONGO_URI = os.getenv("MONGO_URI")
+MONGO_URI = os.getenv("MONGODB_URI")
 if not MONGO_URI:
     raise RuntimeError("MONGO_URI environment variable is not set")
 
