@@ -1,35 +1,73 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import api from "../api/client";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  const [token, setToken] = useState(() => localStorage.getItem("token") || "");
   const [user, setUser] = useState(() => {
     const raw = localStorage.getItem("user");
     return raw ? JSON.parse(raw) : null;
   });
+  const [loading, setLoading] = useState(true);
 
-  const login = async ({ email, password }) => {
-    // ✅ ОДОО: хамгийн энгийн mock login.
-    // Дараа нь backend /auth/login болгоод token + role авч set хийнэ.
-    const role = email?.toLowerCase().includes("admin") ? "admin" : "auditor";
+  const setSession = (nextToken, nextUser) => {
+    setToken(nextToken);
+    setUser(nextUser);
+    if (nextToken) localStorage.setItem("token", nextToken);
+    else localStorage.removeItem("token");
 
-    const fakeToken = "dev-token";
-    localStorage.setItem("token", fakeToken);
+    if (nextUser) localStorage.setItem("user", JSON.stringify(nextUser));
+    else localStorage.removeItem("user");
+  };
 
-    const u = { email, role };
-    localStorage.setItem("user", JSON.stringify(u));
-    setUser(u);
+  const login = async (email, password) => {
+    const res = await api.post("/auth/login", { email, password });
+    const accessToken = res.data.access_token;
+    const role = res.data.role;
+    const name = res.data.name;
 
-    return u;
+    // /auth/me дуудахгүйгээр шууд user object бүрдүүлж болно
+    setSession(accessToken, { email, role, name });
+    return { email, role, name };
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setUser(null);
+    setSession("", null);
   };
 
-  const value = useMemo(() => ({ user, login, logout }), [user]);
+  // refresh хийхэд token байвал /auth/me шалгана
+  useEffect(() => {
+    const run = async () => {
+      try {
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+        const res = await api.get("/auth/me");
+        setUser(res.data);
+      } catch (e) {
+        // token хүчингүй бол session цэвэрлэнэ
+        setSession("", null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      token,
+      user,
+      loading,
+      isAuthed: !!token,
+      login,
+      logout,
+    }),
+    [token, user, loading]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

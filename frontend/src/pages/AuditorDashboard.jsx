@@ -18,7 +18,7 @@ export default function AuditorDashboard() {
       const res = await api.get("/acceptance");
       setItems(Array.isArray(res.data) ? res.data : []);
     } catch (e) {
-      setErr("Acceptance list татаж чадсангүй. Backend/CORS шалга.");
+      setErr("Acceptance list татаж чадсангүй. Token/Backend/CORS шалга.");
     } finally {
       setLoading(false);
     }
@@ -35,7 +35,6 @@ export default function AuditorDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Top bar */}
       <div className="bg-white border-b">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
@@ -62,7 +61,6 @@ export default function AuditorDashboard() {
         </div>
       </div>
 
-      {/* Content */}
       <div className="max-w-5xl mx-auto px-4 py-6">
         {err ? (
           <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-700 text-sm">
@@ -76,68 +74,39 @@ export default function AuditorDashboard() {
           <>
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Acceptance List</h2>
-              <div className="text-sm text-slate-500">
-                Нийт: {items.length}
-              </div>
+              <div className="text-sm text-slate-500">Нийт: {items.length}</div>
             </div>
 
             <div className="mt-4 grid gap-3">
               {items.map((a) => {
-                const itemId = a.id ?? a._id ?? a.clientId;
-
+                const id = a.id ?? a._id ?? a.acceptance_id;
                 return (
                   <Link
-                    key={itemId}
-                    to={`/acceptance/${itemId}`}
+                    key={String(id)}
+                    to={`/acceptance/${id}`}
                     className="block bg-white border rounded-2xl p-4 hover:shadow-sm"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="font-semibold text-slate-900">
-                          {a.companyName || "Unnamed company"}
+                          {a.company_name || a.companyName || "Unnamed company"}
                         </div>
                         <div className="mt-1 text-sm text-slate-600">
-                          {a.clientType || "clientType"} • created:{" "}
-                          {a.createdAt
-                            ? String(a.createdAt).slice(0, 10)
-                            : "-"}
+                          auditor: {a.auditor || "-"} • year: {a.year ?? "-"}
                         </div>
                       </div>
-
-                      <div className="text-xs text-slate-500">
-                        {itemId}
-                      </div>
-                    </div>
-
-                    <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                      <Stat label="Revenue" value={a.revenue} />
-                      <Stat label="Total Assets" value={a.totalAssets} />
-                      <Stat label="Client Type" value={a.clientType} />
-                      <Stat label="Created" value={a.createdAt} />
+                      <div className="text-xs text-slate-500">{String(id)}</div>
                     </div>
                   </Link>
                 );
               })}
 
               {!items.length ? (
-                <div className="text-slate-500 mt-6">
-                  Одоогоор data алга.
-                </div>
+                <div className="text-slate-500 mt-6">Одоогоор data алга.</div>
               ) : null}
             </div>
           </>
         )}
-      </div>
-    </div>
-  );
-}
-
-function Stat({ label, value }) {
-  return (
-    <div className="border rounded-xl p-3 bg-slate-50">
-      <div className="text-xs text-slate-500">{label}</div>
-      <div className="mt-1 font-medium text-slate-900">
-        {value ?? "-"}
       </div>
     </div>
   );

@@ -13,32 +13,14 @@ export default function AcceptanceDetail() {
       setLoading(true);
       setErr("");
       try {
-        // ✅ Backend дээр GET /acceptance (list) л байгаа учраас
-        // list татаж аваад id-гаар нь олж харуулна.
-        const res = await api.get("/acceptance");
-        const list = Array.isArray(res.data) ? res.data : [];
-
-        const found = list.find((x) => {
-          const itemId = x.id ?? x._id ?? x.clientId;
-          return String(itemId) === String(id);
-        });
-
-        if (!found) {
-          setData(null);
-          setErr("Энэ ID-тай acceptance олдсонгүй.");
-          return;
-        }
-
-        setData(found);
+        const res = await api.get(`/acceptance/${id}`);
+        setData(res.data);
       } catch (e) {
-        setErr(
-          "Acceptance detail татаж чадсангүй. GET /acceptance ажиллаж байгаа эсэхээ шалга."
-        );
+        setErr("Acceptance detail татаж чадсангүй. Token/Endpoint шалга.");
       } finally {
         setLoading(false);
       }
     };
-
     run();
   }, [id]);
 
@@ -63,16 +45,14 @@ export default function AcceptanceDetail() {
         {data ? (
           <div className="mt-4 bg-white border rounded-2xl p-5">
             <h1 className="text-xl font-bold">
-              {data.companyName || data.clientType || "Acceptance Detail"}
+              {data.company_name || data.companyName || "Acceptance Detail"}
             </h1>
 
             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-              <Field label="Client Type" value={data.clientType} />
-              <Field label="Company Name" value={data.companyName} />
-              <Field label="Revenue" value={data.revenue} />
-              <Field label="Total Assets" value={data.totalAssets} />
-              <Field label="Created At" value={data.createdAt} />
-              <Field label="ID" value={data.id || data._id} />
+              <Field label="Year" value={data.year} />
+              <Field label="Auditor" value={data.auditor} />
+              <Field label="Status" value={data.status} />
+              <Field label="Created By" value={data.created_by} />
             </div>
 
             <div className="mt-4">
