@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* custom helpers */
+.input {
+  @apply w-full border rounded px-3 py-2;
+}
+.btn {
+  @apply border px-3 py-2 rounded bg-gray-100;
+}
+.btn-primary {
+  @apply bg-blue-600 text-white px-4 py-2 rounded;
+}
+.btn-danger {
+  @apply bg-red-600 text-white px-3 py-2 rounded;
+}
+.th {
+  @apply text-left px-2 py-2 font-semibold;
+}
+.td {
+  @apply px-2 py-2;
+}
