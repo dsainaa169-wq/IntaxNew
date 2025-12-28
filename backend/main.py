@@ -112,8 +112,8 @@ def health():
 # -------------------------
 @app.post("/auth/login")
 def login(payload: dict):
-    email = payload.get("email")
-    password = payload.get("password")
+    email = (payload.get("email") or "").strip().lower()
+    password = payload.get("password") or ""
     user = find_user(email, password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid email or password")
