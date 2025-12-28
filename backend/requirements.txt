@@ -2,4 +2,3 @@ fastapi
 uvicorn
 pymongo
 python-jose
-bson
