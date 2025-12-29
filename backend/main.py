@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import jwt, JWTError
 from pymongo import MongoClient
 from bson import ObjectId
@@ -11,11 +11,20 @@ import os
 app = FastAPI(title="INTAX Audit Backend (Python)", version="0.1.0")
 
 # -------------------------
-# CORS
+# CORS (production safe)
 # -------------------------
+# ✅ Render дээр FRONTEND_ORIGIN env өгч болно:
+# FRONTEND_ORIGIN=https://your-frontend-domain.com
+frontend_origin = os.getenv("FRONTEND_ORIGIN", "").strip()
+
+# local + optional production origin
+origins = ["http://localhost:5173"]
+if frontend_origin:
+    origins.append(frontend_origin)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # дараа нь frontend domain-оор хязгаарлана
+    allow_origins=origins,          # ❗ "*" биш
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -46,8 +55,9 @@ if not JWT_SECRET:
     raise RuntimeError("JWT_SECRET environment variable is not set")
 
 JWT_ALG = "HS256"
-TOKEN_EXPIRE_HOURS = 24
+TOKEN_EXPIRE_HOURS = int(os.getenv("TOKEN_EXPIRE_HOURS", "24"))
 
+# ✅ Swagger-ийн Authorize зөв ажиллуулахын тулд tokenUrl нь login endpoint-тэй яг таарах ёстой
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 USERS = [
@@ -103,6 +113,9 @@ def require_roles(*roles: str):
         return user
     return _dep
 
+# -------------------------
+# Basic endpoints
+# -------------------------
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -110,10 +123,13 @@ def health():
 # -------------------------
 # Auth endpoints
 # -------------------------
+# ✅ ОДОО: OAuth2PasswordRequestForm ашиглана
+# Энэ нь frontend-ээс application/x-www-form-urlencoded хэлбэрээр username/password явуулахыг шаарддаг
 @app.post("/auth/login")
-def login(payload: dict):
-    email = (payload.get("email") or "").strip().lower()
-    password = payload.get("password") or ""
+def login(form: OAuth2PasswordRequestForm = Depends()):
+    email = (form.username or "").strip().lower()
+    password = form.password or ""
+
     user = find_user(email, password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid email or password")
